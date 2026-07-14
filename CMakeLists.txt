@@ -13,6 +13,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(kvstore src/main.cpp)
+add_executable(bench benchmarks/bench_main.cpp)
+target_include_directories(bench PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 find_package(GTest REQUIRED)
 enable_testing()
