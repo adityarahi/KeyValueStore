@@ -10,7 +10,8 @@
 
 #include "KVStore.h"
 
-void worker(KVStoreMutex& store, long ops, int read_ratio, std::vector<long>& latencies) {
+template <typename T>
+void worker(T& store, long ops, int read_ratio, std::vector<long>& latencies) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> distrib(1, 10000);
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
     int num_threads = 4;
     int read_ratio  = 95;   // % of ops that are GETs
     long total_ops  = 1000000;
+    std::string store_type = "mutex"; 
     for(int i = 1; i < argc; i++) {
         if((std::string(argv[i]) == "--threads") && ((i+1) < argc)) {
             num_threads = std::stoi(argv[i+1]);
@@ -45,13 +47,25 @@ int main(int argc, char *argv[]) {
         else if((std::string(argv[i]) == "--ops") && ((i+1) < argc)) {
             total_ops = std::stol(argv[i+1]);
         }
+        else if((std::string(argv[i]) == "--store") && ((i+1) < argc)) {
+            store_type = argv[i+1];
+        }
     }
     std::cout << "Thread_cnt=" << num_threads << ", read ratio=" << read_ratio
-                << ", total operations=" << total_ops << "\n";
+                << ", total operations=" << total_ops << ", store_type=" << store_type <<"\n";
 
     KVStoreMutex store_obj;
-    for(int i = 1; i <= 10000; i++) {
-        store_obj.set("key_" + std::to_string(i), "value_" + std::to_string(i));
+    KVStoreSharedMutex store_obj_shared;
+
+    if(store_type == "mutex") {
+        for(int i = 1; i <= 10000; i++) {
+            store_obj.set("key_" + std::to_string(i), "value_" + std::to_string(i));
+        }
+    }
+    else {
+        for(int i = 1; i <= 10000; i++) {
+            store_obj_shared.set("key_" + std::to_string(i), "value_" + std::to_string(i));
+        }
     }
 
     long ops_per_thread = total_ops / num_threads;
@@ -60,7 +74,12 @@ int main(int argc, char *argv[]) {
     auto start = std::chrono::steady_clock::now();
     std::vector<std::thread> threads;
     for(int i = 0; i < num_threads; i++) {
-        threads.emplace_back(worker, std::ref(store_obj), ops_per_thread, read_ratio, std::ref(lat_vec[i]));
+        if(store_type == "mutex") {
+            threads.emplace_back(worker<KVStoreMutex>, std::ref(store_obj), ops_per_thread, read_ratio, std::ref(lat_vec[i]));
+        }
+        else {
+            threads.emplace_back(worker<KVStoreSharedMutex>, std::ref(store_obj_shared), ops_per_thread, read_ratio, std::ref(lat_vec[i]));
+        }
     }
     
     for (auto& t : threads) {
