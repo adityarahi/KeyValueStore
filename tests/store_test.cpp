@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "KVStore.h"
+#include "store/KVStore.h"
 
 class KVStoreTest : public ::testing::Test {
  protected:

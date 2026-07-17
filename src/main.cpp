@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "KVStore.h"
+#include "store/KVStore.h"
 
 int main() {
   KVStore obj;
