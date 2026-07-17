@@ -7,8 +7,10 @@
 #include <functional>
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 
-#include "KVStore.h"
+#include "store/KVStore.h"
+#include "store/KVStoreSharded.h"
 
 template <typename T>
 void worker(T& store, long ops, int read_ratio, std::vector<long>& latencies) {
@@ -56,15 +58,21 @@ int main(int argc, char *argv[]) {
 
     KVStoreMutex store_obj;
     KVStoreSharedMutex store_obj_shared;
+    KVStoreSharded store_sharded;
 
     if(store_type == "mutex") {
         for(int i = 1; i <= 10000; i++) {
             store_obj.set("key_" + std::to_string(i), "value_" + std::to_string(i));
         }
     }
-    else {
+    else if(store_type == "shared_mutex") {
         for(int i = 1; i <= 10000; i++) {
             store_obj_shared.set("key_" + std::to_string(i), "value_" + std::to_string(i));
+        }
+    }
+    else if(store_type == "sharded") {
+        for(int i = 1; i <= 10000; i++) {
+            store_sharded.set("key_" + std::to_string(i), "value_" + std::to_string(i));
         }
     }
 
@@ -77,8 +85,11 @@ int main(int argc, char *argv[]) {
         if(store_type == "mutex") {
             threads.emplace_back(worker<KVStoreMutex>, std::ref(store_obj), ops_per_thread, read_ratio, std::ref(lat_vec[i]));
         }
-        else {
+        else if(store_type == "shared_mutex") {
             threads.emplace_back(worker<KVStoreSharedMutex>, std::ref(store_obj_shared), ops_per_thread, read_ratio, std::ref(lat_vec[i]));
+        }
+        else if(store_type == "sharded") {
+            threads.emplace_back(worker<KVStoreSharded>, std::ref(store_sharded), ops_per_thread, read_ratio, std::ref(lat_vec[i]));
         }
     }
     
@@ -103,6 +114,6 @@ int main(int argc, char *argv[]) {
 
     sort(flat_lat_vec.begin(), flat_lat_vec.end());
     size_t p99_index = static_cast<size_t>(std::ceil(0.99 * flat_lat_vec.size())) - 1;
-    std::cout << "ops/sec: " << ops_per_sec << "\n";
+    std::cout << "ops/sec: " << std::fixed << std::setprecision(0) << ops_per_sec << "\n";
     std::cout << "p99 latency: " << flat_lat_vec[p99_index] << "\n";
 }
