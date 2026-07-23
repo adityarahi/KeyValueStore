@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(kvstore src/main.cpp)
+target_include_directories(kvstore PRIVATE ${CMAKE_SOURCE_DIR}/src)
 add_executable(bench benchmarks/bench_main.cpp)
 target_include_directories(bench PRIVATE ${CMAKE_SOURCE_DIR}/src)
 

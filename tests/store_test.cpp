@@ -1,6 +1,34 @@
 #include <gtest/gtest.h>
 
 #include "store/KVStore.h"
+#include "net/RespParser.h"
+
+class RespParserTest : public ::testing::Test {
+ protected:
+  void SetUp() override {}
+  void TearDown() override {}
+
+  RespParser obj;
+};
+
+
+TEST_F(RespParserTest, ParseSetCommand) {
+  std::string raw = "*3\r\n$3\r\nSET\r\n$3\r\nfoo\r\n$3\r\nbar\r\n";
+  std::vector<std::string> parsed = {"SET", "foo", "bar"};
+  EXPECT_EQ(obj.parse(raw), parsed);  // Non-fatal assertion
+}
+
+TEST_F(RespParserTest, ParseGetCommand) {
+  std::string raw = "*2\r\n$3\r\nGET\r\n$3\r\nfoo\r\n";
+  std::vector<std::string> parsed = {"GET", "foo"};
+  EXPECT_EQ(obj.parse(raw), parsed);  // Non-fatal assertion
+}
+
+TEST_F(RespParserTest, ParseDelCommand) {
+  std::string raw = "*2\r\n$3\r\nDEL\r\n$3\r\nfoo\r\n";
+  std::vector<std::string> parsed = {"DEL", "foo"};
+  EXPECT_EQ(obj.parse(raw), parsed);  // Non-fatal assertion
+}
 
 class KVStoreTest : public ::testing::Test {
  protected:

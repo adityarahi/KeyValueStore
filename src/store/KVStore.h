@@ -1,9 +1,9 @@
 #pragma once
+#include <mutex>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
-#include <mutex>
-#include <shared_mutex>
 
 class KVStore {
  private:
@@ -64,19 +64,21 @@ class KVStoreSharedMutex {
 
  public:
   void set(const std::string& key, const std::string& value) {
-    std::unique_lock<std::shared_mutex> lock(mtx_); // Exclusive lock for writing
+    std::unique_lock<std::shared_mutex> lock(
+        mtx_);  // Exclusive lock for writing
     mp_[key] = value;
   }
 
   std::optional<std::string> get(const std::string& key) {
-    std::shared_lock<std::shared_mutex> lock(mtx_); // shared lock for reading
+    std::shared_lock<std::shared_mutex> lock(mtx_);  // shared lock for reading
     auto it = mp_.find(key);
     if (it == mp_.end()) return std::nullopt;
     return it->second;
   }
 
   bool del(const std::string& key) {
-    std::unique_lock<std::shared_mutex> lock(mtx_); // Exclusive lock for writing
+    std::unique_lock<std::shared_mutex> lock(
+        mtx_);  // Exclusive lock for writing
     auto it = mp_.find(key);
     if (it == mp_.end()) return false;
     mp_.erase(it);
