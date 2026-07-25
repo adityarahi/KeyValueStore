@@ -103,6 +103,20 @@ class Server {
             if (bytes_sent == -1) {
               std::cout << "ERROR while sending status on GET command\n";
             }
+          } else if (tokens[0] == "EXPIRE") {   
+            if (tokens.size() != 3) {
+              continue;
+            }
+            if (ctx.store.expire(tokens[1], std::stoi(tokens[2]))) {
+              std::string msg = ":1\r\n";
+              bytes_sent = send(client_fd, msg.c_str(), msg.size(), 0);
+            } else {
+              std::string msg = ":0\r\n";
+              bytes_sent = send(client_fd, msg.c_str(), msg.size(), 0);
+            }
+            if (bytes_sent == -1) {
+              std::cout << "ERROR while sending status on EXPIRE command\n";
+            }
           } else {
             std::string msg = "-ERR unknown command\r\n";
             bytes_sent = send(client_fd, msg.c_str(), msg.size(), 0);

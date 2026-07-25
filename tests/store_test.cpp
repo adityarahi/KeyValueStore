@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "store/KVStore.h"
+#include "store/KVStoreSharded.h"
 #include "net/RespParser.h"
 
 class RespParserTest : public ::testing::Test {
@@ -44,7 +44,7 @@ class KVStoreTest : public ::testing::Test {
     // obj.cleanUp();
   }
 
-  KVStore obj;
+  KVStoreSharded obj;
 };
 
 TEST_F(KVStoreTest, SetAndGet) {
@@ -73,4 +73,19 @@ TEST_F(KVStoreTest, OverwriteValue) {
   EXPECT_EQ(obj.get("25"), "50");  // Non-fatal assertion
   obj.set("25", "75");
   ASSERT_TRUE(obj.get("25") == "75");  // Fatal assertion
+}
+
+TEST_F(KVStoreTest, ExpireKey) {
+  obj.set("25", "50");
+  EXPECT_EQ(obj.get("25"), "50");  // Non-fatal assertion
+  obj.expire("25", 1);
+  sleep(2);
+  ASSERT_TRUE(obj.get("25") == std::nullopt);  // Fatal assertion
+}
+
+TEST_F(KVStoreTest, LRUEviction) {
+  for(int i = 1; i <= 16001; i++) {
+    obj.set("key_" + std::to_string(i), "value_" + std::to_string(i));
+  }
+  ASSERT_TRUE(obj.size() < 16001);
 }
